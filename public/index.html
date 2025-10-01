@@ -26,6 +26,42 @@
             font-weight: 600;
             margin-bottom: 20px;
         }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: #666;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #000;
+            border-bottom: 2px solid #000;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
         select {
             width: 100%;
             padding: 12px;
@@ -61,10 +97,42 @@
             padding: 8px 0;
             border-bottom: 1px solid #eee;
         }
+        .player-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .player-result:last-child {
+            border-bottom: none;
+        }
+        .player-info {
+            flex: 1;
+        }
+        .player-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .player-team {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .download-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+        }
         .status {
             padding: 12px;
             text-align: center;
             font-size: 14px;
+            color: #666;
+        }
+        .search-results {
+            margin-top: 20px;
         }
         #rosterBox {
             display: none;
@@ -75,57 +143,95 @@
     <div class="container">
         <h1>NHL Roster Image Downloader</h1>
         
-        <select id="teamSelect" onchange="loadRoster()">
-            <option value="">Select Team</option>
-            <option value="ANA">Anaheim Ducks</option>
-            <option value="ARI">Arizona Coyotes</option>
-            <option value="BOS">Boston Bruins</option>
-            <option value="BUF">Buffalo Sabres</option>
-            <option value="CGY">Calgary Flames</option>
-            <option value="CAR">Carolina Hurricanes</option>
-            <option value="CHI">Chicago Blackhawks</option>
-            <option value="COL">Colorado Avalanche</option>
-            <option value="CBJ">Columbus Blue Jackets</option>
-            <option value="DAL">Dallas Stars</option>
-            <option value="DET">Detroit Red Wings</option>
-            <option value="EDM">Edmonton Oilers</option>
-            <option value="FLA">Florida Panthers</option>
-            <option value="LAK">Los Angeles Kings</option>
-            <option value="MIN">Minnesota Wild</option>
-            <option value="MTL">Montreal Canadiens</option>
-            <option value="NSH">Nashville Predators</option>
-            <option value="NJD">New Jersey Devils</option>
-            <option value="NYI">New York Islanders</option>
-            <option value="NYR">New York Rangers</option>
-            <option value="OTT">Ottawa Senators</option>
-            <option value="PHI">Philadelphia Flyers</option>
-            <option value="PIT">Pittsburgh Penguins</option>
-            <option value="SJS">San Jose Sharks</option>
-            <option value="SEA">Seattle Kraken</option>
-            <option value="STL">St. Louis Blues</option>
-            <option value="TBL">Tampa Bay Lightning</option>
-            <option value="TOR">Toronto Maple Leafs</option>
-            <option value="VAN">Vancouver Canucks</option>
-            <option value="VGK">Vegas Golden Knights</option>
-            <option value="WSH">Washington Capitals</option>
-            <option value="WPG">Winnipeg Jets</option>
-        </select>
-        
-        <div id="rosterBox">
-            <div class="roster-list" id="rosterList"></div>
-            <button onclick="downloadZip()" id="downloadBtn">Download All Photos (ZIP)</button>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('team')">By Team</button>
+            <button class="tab" onclick="switchTab('player')">By Player</button>
         </div>
-        
-        <div class="status" id="status"></div>
+
+        <!-- BY TEAM TAB -->
+        <div id="teamTab" class="tab-content active">
+            <select id="teamSelect" onchange="loadRoster()">
+                <option value="">Select Team</option>
+                <option value="ANA">Anaheim Ducks</option>
+                <option value="ARI">Arizona Coyotes</option>
+                <option value="BOS">Boston Bruins</option>
+                <option value="BUF">Buffalo Sabres</option>
+                <option value="CGY">Calgary Flames</option>
+                <option value="CAR">Carolina Hurricanes</option>
+                <option value="CHI">Chicago Blackhawks</option>
+                <option value="COL">Colorado Avalanche</option>
+                <option value="CBJ">Columbus Blue Jackets</option>
+                <option value="DAL">Dallas Stars</option>
+                <option value="DET">Detroit Red Wings</option>
+                <option value="EDM">Edmonton Oilers</option>
+                <option value="FLA">Florida Panthers</option>
+                <option value="LAK">Los Angeles Kings</option>
+                <option value="MIN">Minnesota Wild</option>
+                <option value="MTL">Montreal Canadiens</option>
+                <option value="NSH">Nashville Predators</option>
+                <option value="NJD">New Jersey Devils</option>
+                <option value="NYI">New York Islanders</option>
+                <option value="NYR">New York Rangers</option>
+                <option value="OTT">Ottawa Senators</option>
+                <option value="PHI">Philadelphia Flyers</option>
+                <option value="PIT">Pittsburgh Penguins</option>
+                <option value="SJS">San Jose Sharks</option>
+                <option value="SEA">Seattle Kraken</option>
+                <option value="STL">St. Louis Blues</option>
+                <option value="TBL">Tampa Bay Lightning</option>
+                <option value="TOR">Toronto Maple Leafs</option>
+                <option value="VAN">Vancouver Canucks</option>
+                <option value="VGK">Vegas Golden Knights</option>
+                <option value="WSH">Washington Capitals</option>
+                <option value="WPG">Winnipeg Jets</option>
+            </select>
+            
+            <div id="rosterBox">
+                <div class="roster-list" id="rosterList"></div>
+                <button onclick="downloadZip()" id="downloadBtn">Download All Photos (ZIP)</button>
+            </div>
+            
+            <div class="status" id="teamStatus"></div>
+        </div>
+
+        <!-- BY PLAYER TAB -->
+        <div id="playerTab" class="tab-content">
+            <input 
+                type="text" 
+                id="playerSearch" 
+                placeholder="Search for a player..." 
+                oninput="searchPlayers()"
+            >
+            
+            <div class="status" id="playerStatus"></div>
+            
+            <div class="search-results" id="searchResults"></div>
+        </div>
     </div>
 
     <script>
         let currentRoster = [];
         let currentTeamCode = '';
+        let allPlayers = [];
+        let searchTimeout = null;
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'team') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('teamTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('playerTab').classList.add('active');
+            }
+        }
 
         async function loadRoster() {
             const teamCode = document.getElementById('teamSelect').value;
-            const status = document.getElementById('status');
+            const status = document.getElementById('teamStatus');
             
             if (!teamCode) {
                 document.getElementById('rosterBox').style.display = 'none';
@@ -149,7 +255,7 @@
                 rosterList.innerHTML = '';
                 
                 if (currentRoster.length === 0) {
-                    status.textContent = 'No players with FantasyPros images found';
+                    status.textContent = 'No players found';
                     document.getElementById('rosterBox').style.display = 'none';
                     return;
                 }
@@ -171,7 +277,7 @@
         }
 
         async function downloadZip() {
-            const status = document.getElementById('status');
+            const status = document.getElementById('teamStatus');
             const btn = document.getElementById('downloadBtn');
             
             try {
@@ -198,6 +304,96 @@
                 status.textContent = 'Download failed: ' + error.message;
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        function searchPlayers() {
+            const query = document.getElementById('playerSearch').value.trim();
+            const status = document.getElementById('playerStatus');
+            const results = document.getElementById('searchResults');
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            if (query.length < 2) {
+                results.innerHTML = '';
+                status.textContent = '';
+                return;
+            }
+            
+            status.textContent = 'Searching...';
+            
+            // Debounce the search
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/search-player?query=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Search failed');
+                    }
+                    
+                    displaySearchResults(data.results);
+                    status.textContent = `${data.results.length} player${data.results.length !== 1 ? 's' : ''} found`;
+                    
+                } catch (error) {
+                    status.textContent = 'Search error: ' + error.message;
+                    results.innerHTML = '';
+                }
+            }, 500); // Wait 500ms after user stops typing
+        }
+
+        function displaySearchResults(players) {
+            const results = document.getElementById('searchResults');
+            results.innerHTML = '';
+            
+            if (players.length === 0) {
+                results.innerHTML = '<div class="status">No players found</div>';
+                return;
+            }
+            
+            players.forEach(player => {
+                const item = document.createElement('div');
+                item.className = 'player-result';
+                item.innerHTML = `
+                    <div class="player-info">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-team">${player.teamName}</div>
+                    </div>
+                    <button class="download-btn" onclick="downloadSinglePlayer('${player.teamCode}', '${player.id}', '${player.name.replace(/'/g, "\\'")}')">
+                        Download
+                    </button>
+                `;
+                results.appendChild(item);
+            });
+        }
+
+        async function downloadSinglePlayer(teamCode, playerId, playerName) {
+            const status = document.getElementById('playerStatus');
+            
+            try {
+                status.textContent = `Downloading ${playerName}...`;
+                
+                const response = await fetch(`/api/download-single?teamCode=${teamCode}&playerId=${playerId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+                
+                const blob = await response.blob();
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${playerName.replace(/\s+/g, '_')}.png`;
+                a.click();
+                
+                status.textContent = 'Download complete';
+                
+            } catch (error) {
+                status.textContent = 'Download failed: ' + error.message;
             }
         }
     </script>
