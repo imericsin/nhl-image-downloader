@@ -3,22 +3,41 @@ import axios from 'axios';
 import JSZip from 'jszip';
 import sharp from 'sharp';
 
-function getImageUrl(teamCode, playerId) {
-  return `https://assets.nhle.com/mugs/nhl/20242025/${teamCode.toUpperCase()}/${playerId}.png`;
+function getImageUrls(teamCode, playerId) {
+  // Try multiple season folders - newest first
+  return [
+    `https://assets.nhle.com/mugs/nhl/20252026/${teamCode.toUpperCase()}/${playerId}.png`,
+    `https://assets.nhle.com/mugs/nhl/20242025/${teamCode.toUpperCase()}/${playerId}.png`,
+    `https://assets.nhle.com/mugs/nhl/20232024/${teamCode.toUpperCase()}/${playerId}.png`
+  ];
+}
+
+async function fetchImageWithFallback(teamCode, playerId) {
+  const urls = getImageUrls(teamCode, playerId);
+  
+  for (const url of urls) {
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: 10000
+      });
+      return Buffer.from(response.data);
+    } catch (error) {
+      // Try next URL
+      continue;
+    }
+  }
+  
+  throw new Error('No image found in any season folder');
 }
 
 async function cropAndResizeImage(imageBuffer) {
   try {
-    // Get image metadata to determine original dimensions
     const metadata = await sharp(imageBuffer).metadata();
-    
-    // NHL images are typically wider than they are tall
-    // We want to crop to square (1:1) from the center
     const size = Math.min(metadata.width, metadata.height);
     const left = Math.floor((metadata.width - size) / 2);
     const top = Math.floor((metadata.height - size) / 2);
     
-    // Crop to square and resize to 300x300
     const processedImage = await sharp(imageBuffer)
       .extract({ left, top, width: size, height: size })
       .resize(300, 300, {
@@ -43,12 +62,10 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Get current origin for the roster API call
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
     const origin = `${protocol}://${host}`;
     
-    // First get the roster
     const rosterResponse = await axios.get(`${origin}/api/roster?teamCode=${teamCode}`);
     const { roster, teamName } = rosterResponse.data;
     
@@ -66,17 +83,12 @@ export default async function handler(req, res) {
     
     for (const player of roster) {
       try {
-        const imageUrl = getImageUrl(teamCode, player.id);
         console.log(`Fetching ${player.name}...`);
         
-        const response = await axios.get(imageUrl, {
-          responseType: 'arraybuffer',
-          timeout: 10000
-        });
+        const imageBuffer = await fetchImageWithFallback(teamCode, player.id);
         
-        // Crop and resize the image to 300x300
         console.log(`Processing ${player.name}...`);
-        const processedImage = await cropAndResizeImage(Buffer.from(response.data));
+        const processedImage = await cropAndResizeImage(imageBuffer);
         
         const fileName = `${player.name.replace(/\s+/g, '_')}.png`;
         folder.file(fileName, processedImage);

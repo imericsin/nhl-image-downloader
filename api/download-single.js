@@ -2,8 +2,30 @@
 import axios from 'axios';
 import sharp from 'sharp';
 
-function getImageUrl(teamCode, playerId) {
-  return `https://assets.nhle.com/mugs/nhl/20242025/${teamCode.toUpperCase()}/${playerId}.png`;
+function getImageUrls(teamCode, playerId) {
+  return [
+    `https://assets.nhle.com/mugs/nhl/20252026/${teamCode.toUpperCase()}/${playerId}.png`,
+    `https://assets.nhle.com/mugs/nhl/20242025/${teamCode.toUpperCase()}/${playerId}.png`,
+    `https://assets.nhle.com/mugs/nhl/20232024/${teamCode.toUpperCase()}/${playerId}.png`
+  ];
+}
+
+async function fetchImageWithFallback(teamCode, playerId) {
+  const urls = getImageUrls(teamCode, playerId);
+  
+  for (const url of urls) {
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: 10000
+      });
+      return Buffer.from(response.data);
+    } catch (error) {
+      continue;
+    }
+  }
+  
+  throw new Error('No image found in any season folder');
 }
 
 async function cropAndResizeImage(imageBuffer) {
@@ -27,17 +49,12 @@ export default async function handler(req, res) {
   if (!teamCode || !playerId) {
     return res.status(400).json({ error: 'Team code and player ID required' });
   }
-
+  
   try {
-    const imageUrl = getImageUrl(teamCode, playerId);
     console.log(`Fetching image for player ${playerId}...`);
     
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-      timeout: 10000
-    });
-    
-    const processedImage = await cropAndResizeImage(Buffer.from(response.data));
+    const imageBuffer = await fetchImageWithFallback(teamCode, playerId);
+    const processedImage = await cropAndResizeImage(imageBuffer);
     
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Disposition', 'attachment; filename="player.png"');
