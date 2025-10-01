@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   if (!teamCode || !playerId) {
     return res.status(400).json({ error: 'Team code and player ID required' });
   }
-  
+
   try {
     const imageUrl = getImageUrl(teamCode, playerId);
     console.log(`Fetching image for player ${playerId}...`);
