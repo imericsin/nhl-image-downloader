@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHL Roster Image Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 480px;
+            padding: 20px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .roster-list {
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .player-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .status {
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+        #rosterBox {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NHL Roster Image Downloader</h1>
+        
+        <select id="teamSelect" onchange="loadRoster()">
+            <option value="">Select Team</option>
+            <option value="ANA">Anaheim Ducks</option>
+            <option value="ARI">Arizona Coyotes</option>
+            <option value="BOS">Boston Bruins</option>
+            <option value="BUF">Buffalo Sabres</option>
+            <option value="CGY">Calgary Flames</option>
+            <option value="CAR">Carolina Hurricanes</option>
+            <option value="CHI">Chicago Blackhawks</option>
+            <option value="COL">Colorado Avalanche</option>
+            <option value="CBJ">Columbus Blue Jackets</option>
+            <option value="DAL">Dallas Stars</option>
+            <option value="DET">Detroit Red Wings</option>
+            <option value="EDM">Edmonton Oilers</option>
+            <option value="FLA">Florida Panthers</option>
+            <option value="LAK">Los Angeles Kings</option>
+            <option value="MIN">Minnesota Wild</option>
+            <option value="MTL">Montreal Canadiens</option>
+            <option value="NSH">Nashville Predators</option>
+            <option value="NJD">New Jersey Devils</option>
+            <option value="NYI">New York Islanders</option>
+            <option value="NYR">New York Rangers</option>
+            <option value="OTT">Ottawa Senators</option>
+            <option value="PHI">Philadelphia Flyers</option>
+            <option value="PIT">Pittsburgh Penguins</option>
+            <option value="SJS">San Jose Sharks</option>
+            <option value="SEA">Seattle Kraken</option>
+            <option value="STL">St. Louis Blues</option>
+            <option value="TBL">Tampa Bay Lightning</option>
+            <option value="TOR">Toronto Maple Leafs</option>
+            <option value="VAN">Vancouver Canucks</option>
+            <option value="VGK">Vegas Golden Knights</option>
+            <option value="WSH">Washington Capitals</option>
+            <option value="WPG">Winnipeg Jets</option>
+        </select>
+        
+        <div id="rosterBox">
+            <div class="roster-list" id="rosterList"></div>
+            <button onclick="downloadZip()" id="downloadBtn">Download All Photos (ZIP)</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        let currentRoster = [];
+        let currentTeamCode = '';
+
+        async function loadRoster() {
+            const teamCode = document.getElementById('teamSelect').value;
+            const status = document.getElementById('status');
+            
+            if (!teamCode) {
+                document.getElementById('rosterBox').style.display = 'none';
+                status.textContent = '';
+                return;
+            }
+            
+            currentTeamCode = teamCode;
+            
+            try {
+                status.textContent = 'Loading roster from NHL...';
+                const response = await fetch(`/api/roster?teamCode=${teamCode}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load roster');
+                }
+                
+                currentRoster = data.roster;
+                const rosterList = document.getElementById('rosterList');
+                rosterList.innerHTML = '';
+                
+                if (currentRoster.length === 0) {
+                    status.textContent = 'No players with FantasyPros images found';
+                    document.getElementById('rosterBox').style.display = 'none';
+                    return;
+                }
+                
+                currentRoster.forEach(player => {
+                    const item = document.createElement('div');
+                    item.className = 'player-item';
+                    item.textContent = player.name;
+                    rosterList.appendChild(item);
+                });
+                
+                document.getElementById('rosterBox').style.display = 'block';
+                status.textContent = `${currentRoster.length} players loaded from ${data.teamName}`;
+                
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                document.getElementById('rosterBox').style.display = 'none';
+            }
+        }
+
+        async function downloadZip() {
+            const status = document.getElementById('status');
+            const btn = document.getElementById('downloadBtn');
+            
+            try {
+                btn.disabled = true;
+                status.textContent = 'Downloading... 30-60 seconds';
+                
+                const response = await fetch(`/api/download?teamCode=${currentTeamCode}`);
+                
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
+                
+                const blob = await response.blob();
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentTeamCode}_Photos.zip`;
+                a.click();
+                
+                status.textContent = 'Download complete';
+                
+            } catch (error) {
+                status.textContent = 'Download failed: ' + error.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

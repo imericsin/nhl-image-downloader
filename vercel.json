@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/api/roster", "destination": "/api/roster" },
+    { "source": "/api/download", "destination": "/api/download" },
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ]
+}
